@@ -4,3 +4,22 @@ h1 {
     text-align: center;
     padding: 10px;
 }
+
+.alert-success {
+    color: white;
+    background-color: green;
+    border-color: darkgreen;
+}
+
+.alert-error {
+    color: white;
+    background-color: red;
+    border-color: darkred;
+}
+
+.alert-info {
+    color: white;
+    background-color: blue;
+    border-color: darkblue;
+}
+
