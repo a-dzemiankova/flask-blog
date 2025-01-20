@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, url_for, flash, redirect
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from flask_migrate import Migrate
-from werkzeug.exceptions import abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import os
@@ -13,11 +13,14 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(50), nullable=False, unique=True)
@@ -25,7 +28,7 @@ class User(db.Model):
     password = db.Column(db.String(500), nullable=False)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
-    posts = db.relationship('Post', backref='users', lazy=True)
+    posts = db.relationship('Post', backref='author', lazy=True)
 
     def __repr__(self):
         return f"<user {self.id}>"
@@ -43,10 +46,20 @@ class Post(db.Model):
         return f"<post {self.id}>"
 
 
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+@app.context_processor
+def inject_user():
+    return dict(user=current_user, posts=Post.query.all())
+
+
 @app.route('/')
 def index():
     posts = Post.query.all()
-    return render_template('index.html', posts=posts)
+    return render_template('index.html', posts=posts, user=current_user)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -72,7 +85,7 @@ def register():
                     db.session.rollback()
                     print('Ошибка при добавлении юзера в бд:', e)
 
-                return redirect(url_for('index'))
+                return redirect(url_for('login'))
         else:
             flash('All fields are required!', 'danger')
 
@@ -87,6 +100,7 @@ def post(post_id):
 
 
 @app.route('/create', methods=('GET', 'POST'))
+@login_required
 def create():
     if request.method == 'POST':
         # здесь должна быть проверка введенных данных
@@ -97,7 +111,7 @@ def create():
             flash('Title is required!')
         else:
             try:
-                post = Post(title=title, content=content, author_id=1)
+                post = Post(title=title, content=content, author_id=current_user.id)
                 db.session.add(post)
                 db.session.flush()
                 db.session.commit()
@@ -119,7 +133,9 @@ def login():
         if email and password:
             user = User.query.filter(User.email == email).first()
             if user and check_password_hash(user.password, password):
+                login_user(user)
                 flash("You've logged in successfully!", 'success')
+                return render_template('index.html', posts=Post.query.all(), user=current_user)
             else:
                 flash('Wrong email or password', 'danger')
         else:
@@ -128,39 +144,20 @@ def login():
     return render_template('login.html')
 
 
-#
-#
-# @app.route('/<int:id>/edit', methods=('GET', 'POST'))
-# def edit(id):
-#     post = get_post(id)
-#     if request.method == 'POST':
-#         title = request.form['title']
-#         content = request.form['content']
-#
-#         if not title:
-#             flash('Title is required!')
-#         else:
-#             conn = get_db_connection()
-#             conn.execute('UPDATE posts SET title = ?, content = ?'
-#                          ' WHERE id = ?',
-#                          (title, content, id))
-#             conn.commit()
-#             conn.close()
-#             return redirect(url_for('index'))
-#
-#     return render_template('edit.html', post=post)
-#
-#
-# @app.route('/<int:id>/delete', methods=('POST',))
-# def delete(id):
-#     post = get_post(id)
-#     conn = get_db_connection()
-#     conn.execute('DELETE FROM posts WHERE id = ?', (id,))
-#     conn.commit()
-#     conn.close()
-#     flash('"{}" was successfully deleted!'.format(post['title']))
-#     return redirect(url_for('index'))
-#
-#
+@app.route('/logout', methods=['POST'])
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out.', 'success')
+    return redirect('/')
+
+
+@app.route('/posts/user_<int:user_id>')
+@login_required
+def users_posts(user_id):
+    posts = Post.query.filter_by(author_id=user_id).all()
+    return render_template('posts.html', posts=posts)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
