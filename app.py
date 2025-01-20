@@ -96,7 +96,7 @@ def register():
 def post(post_id):
     '''Получить из бд пост по айди'''
     post = Post.query.get(post_id)
-    return render_template('post.html', post=post)
+    return render_template('post.html', post=post, user=current_user)
 
 
 @app.route('/create', methods=('GET', 'POST'))
@@ -157,6 +157,34 @@ def logout():
 def users_posts(user_id):
     posts = Post.query.filter_by(author_id=user_id).all()
     return render_template('posts.html', posts=posts)
+
+
+@app.route('/posts/edit/<int:post_id>', methods=['GET', 'POST'])
+@login_required
+def edit_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+
+        post.title = title
+        post.content = content
+
+        db.session.commit()
+        flash('Your post has been updated!', 'success')
+        return redirect(url_for('post', post_id=post.id))
+
+    return render_template('edit.html', post=post)
+
+
+@app.route('/posts/delete/<int:post_id>', methods=['POST'])
+@login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    db.session.delete(post)
+    db.session.commit()
+    flash('Your post has been deleted.', 'danger')
+    return redirect(url_for('index'))
 
 
 if __name__ == '__main__':
