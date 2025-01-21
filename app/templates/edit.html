@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{% block title %} Edit post {% endblock %}</h1>
+
+{%if user.id == post.author.id %}
+    <form action="{{ url_for('edit_post', post_id=post.id) }}" method="POST">
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" name="title"
+                   placeholder="Post title" class="form-control"
+                   value="{{ post.title}}"></input>
+        </div>
+
+        <div class="form-group">
+            <label for="content">Content</label>
+            <textarea name="content" placeholder="Post content"
+                      class="form-control">{{ post.content }}</textarea>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+    {%else%}
+    <h3> You are not allowed to edit this post. </h3>
+    {% endif %}
+{% endblock %}
