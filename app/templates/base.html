@@ -16,21 +16,56 @@
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
+
+        <div class="collapse navbar-collapse" id="navbarGreet">
             <ul class="navbar-nav">
-            <li class="nav-item active">
-                <a class="nav-link" href="#">About</a>
+                {% if user.is_authenticated %}
+                <li>Hello, {{ user.username }}!</li>
+                {% else %}
+                <li>Hello, guest!</li>
+                {% endif %}
+                </ul>
+         </div>
+
+
+        <div class="collapse navbar-collapse custom-align" id="navbarNav">
+            <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                <li class="nav-item active">
+                 <form action="/logout" method="POST" style="display: inline;">
+               <button type="submit" class="btn btn-primary big-button">Logout</button>
+                </form>
             </li>
                 <li class="nav-item">
             <a class="nav-link" href="{{url_for('create')}}">New Post</a>
                 </li>
+                <li class="nav-item">
+            <a class="nav-link" href="{{url_for('users_posts')}}">My posts</a>
+                </li>
+            {% else %}
+
+                <li class="nav-item">
+            <a class="nav-link" href="{{url_for('login')}}">Login</a>
+                </li>
+                <li class="nav-item active">
+                <a class="nav-link" href="{{url_for('register')}}">Register</a>
+            </li>
+            {% endif %}
+
             </ul>
         </div>
     </nav>
     <div class="container">
-            {% for message in get_flashed_messages() %}
-            <div class="alert alert-danger">{{ message }}</div>
-            {% endfor %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
         {% block content %} {% endblock %}
     </div>
 

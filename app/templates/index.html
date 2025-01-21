@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+    <h1>{% block title %} Welcome to FlaskBlog {% endblock %}</h1>
+    {%if posts%}
+        {% for post in posts %}
+            <a href="{{ url_for('post', post_id=post.id) }}">
+                <h2>{{ post.title }}</h2>
+            </a>
+            <span class="badge badge-primary">{{ post.created }}</span>
+            <span class="badge badge-primary">{{ post.author.username }}</span>
+            <hr>
+        {% endfor %}
+    {%else%}
+         <h2>No posts yet...</h2>
+    {%endif%}
+
+{% endblock %}

@@ -1,0 +1,35 @@
+h1 {
+    border: 2px #eee solid;
+    color: brown;
+    text-align: center;
+    padding: 10px;
+}
+
+.alert-success {
+    color: white;
+    background-color: green;
+    border-color: darkgreen;
+}
+
+.alert-error {
+    color: white;
+    background-color: red;
+    border-color: darkred;
+}
+
+.alert-info {
+    color: white;
+    background-color: blue;
+    border-color: darkblue;
+}
+
+.custom-align {
+    margin-left: 0 !important; /* Переопределяет Bootstrap */
+    text-align: left !important; /* Переопределяет Bootstrap */
+}
+
+.big-button {
+    font-size: 1.5rem; /* Размер шрифта */
+    padding: 15px 30px; /* Внутренние отступы */
+    border-radius: 5px; /* Радиус закругления */
+}
